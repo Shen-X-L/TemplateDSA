@@ -1,8 +1,8 @@
 #pragma once
-#include <cstddef>
-#include <cstdlib>
-#include <limits>
-#include <utility>
+#include <cstdlib>	//std::malloc std::free
+#include <new>		//¶¨Î»new
+#include <utility>	//std::forward
+#include <cstddef>	//std::size_t std::ptrdiff_t
 
 namespace sxl {
 	template <class Type>
@@ -32,6 +32,9 @@ namespace sxl {
 			return static_cast<pointer>(std::malloc(count * sizeof(Type)));
 		}
 		void deallocate(pointer const ptr, const size_type count) {
+			if (ptr == nullptr) {
+				return;
+			}
 			std::free(ptr);
 		}
 		template<class Object, class... Args>

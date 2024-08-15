@@ -128,7 +128,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="allocator.hpp" />
+    <ClInclude Include="LinkedList\DoubleLinkedList.hpp" />
+    <ClInclude Include="LinkedList\LinkedList.hpp" />
+    <ClInclude Include="LinkedList\StaticDoubleLinkedList.hpp" />
+    <ClInclude Include="LinkedList\StaticLinkedList.hpp" />
+    <ClInclude Include="List\Array.hpp" />
     <ClInclude Include="List\LinearList.hpp" />
+    <ClInclude Include="Queue\LinkQueue.hpp" />
+    <ClInclude Include="Queue\StaticQueue.hpp" />
+    <ClInclude Include="Stack\LinkStack.hpp" />
+    <ClInclude Include="Stack\StaticStack.hpp" />
+    <ClInclude Include="Tree\AVLTree.hpp" />
+    <ClInclude Include="Tree\BinarySortTree.hpp" />
+    <ClInclude Include="Tree\BinaryTree.hpp" />
+    <ClInclude Include="Tree\BinaryWithParentTree.hpp" />
+    <ClInclude Include="Tree\TheTreeHead.h" />
+    <ClInclude Include="Tree\Tree.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Text.cpp" />

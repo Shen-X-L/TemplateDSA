@@ -1,23 +1,26 @@
 #pragma once
-#include <iterator>
+#include <cstddef>           //size_t
+#include <iterator>         //std::reverse_iterator
+#include <stdexcept>        //std::out_of_range
+#include <initializer_list> //std::initializer_list<>
 #include "../allocator.hpp"
 
 namespace sxl {
     template<typename Type, class Alloc = sxl::Allocator<Type>>//线性表
     class LinearList {
     public:
-        using value_type = T;
+        using value_type = Type;
         using allocator_type = Alloc;
         using size_type = size_t;
         using difference_type = ptrdiff_t;
-        using pointer = T*;
-        using const_pointer = T const*;
-        using reference = T&;
-        using const_reference = T const&;
-        using iterator = T*;
-        using const_iterator = T const*;
-        using reverse_iterator = std::reverse_iterator<T*>;
-        using const_reverse_iterator = std::reverse_iterator<T const*>;
+        using pointer = Type*;
+        using const_pointer = const Type*;
+        using reference = Type&;
+        using const_reference = const Type&;
+        using iterator = Type*;
+        using const_iterator = const Type*;
+        using reverse_iterator = std::reverse_iterator<Type*>;
+        using const_reverse_iterator = std::reverse_iterator<const Type*>;
     protected:
         Type* _ptr;
         size_t _length;//元素个数
@@ -53,7 +56,7 @@ namespace sxl {
             _ptr = _alloc.allocate(n);
             _capacity = _length = n;
             for (size_t i = 0; i < n; ++i, ++first) {
-                _allco.construct(&_ptr[i], *first);
+                _alloc.construct(&_ptr[i], *first);
             }
         }
         //拷贝构造
@@ -63,7 +66,7 @@ namespace sxl {
                 _ptr = nullptr;
             }
             else {
-                _pte = _alloc.allocate(_length);
+                _ptr = _alloc.allocate(_length);
                 for (size_t i = 0; i <_length; ++i) {
                     _alloc.construct(&_ptr[i], other._ptr[i]);
                 }
@@ -71,12 +74,12 @@ namespace sxl {
         }
         //换分配器拷贝构造
         LinearList(const LinearList& other, const Alloc& alloc)
-            :_length(other._length), _capacity(other._length), _alloc(.alloc) {
+            :_length(other._length), _capacity(other._length), _alloc(alloc) {
             if (_length == 0) {
                 _ptr = nullptr;
             }
             else {
-                _pte = _alloc.allocate(_length);
+                _ptr = _alloc.allocate(_length);
                 for (size_t i = 0; i < _length; ++i) {
                     _alloc.construct(&_ptr[i], other._ptr[i]);
                 }
@@ -110,7 +113,7 @@ namespace sxl {
             if (this != &other) {
                 clear();
                 if (_capacity < other._length) {
-                    _alloc.deallocate(_pte, _capacity);
+                    _alloc.deallocate(_ptr, _capacity);
                     _ptr = _alloc.allocate(other._length);
                 }
                 for (size_t i = 0; i < other._length; ++i) {
@@ -175,7 +178,7 @@ namespace sxl {
             }
             else if (newLen > _length) {
                 reserve(newLen);
-                for (size_t i = _size; i < newLen; ++i) {
+                for (size_t i = _length; i < newLen; ++i) {
                     _alloc.construct(&_ptr[i]);
                 }
             }
@@ -183,7 +186,7 @@ namespace sxl {
             return;
         }
         //延长赋值或截断数组
-        void resize(size_t newLen,const T& value) {
+        void resize(size_t newLen,const Type& value) {
             if (newLen < _length) {
                 //截断并析构
                 for (size_t i = newLen; i < _length; ++i) {
@@ -192,7 +195,7 @@ namespace sxl {
             }
             else if (newLen > _length) {
                 reserve(newLen);
-                for (size_t i = _size; i < newLen; ++i) {
+                for (size_t i = _length; i < newLen; ++i) {
                     _alloc.construct(&_ptr[i],value);
                 }
             }
@@ -213,7 +216,7 @@ namespace sxl {
                 _capacity = 0;
                 return;
             }
-            newPtr = _alloc.allocate(newCap);
+            Type* newPtr = _alloc.allocate(newCap);
             for (size_t i = 0; i < _length; ++i) {
                 _alloc.construct(&newPtr[i], std::move_if_noexcept(_ptr[i]));
                 _alloc.destroy(&_ptr[i]);
@@ -227,7 +230,7 @@ namespace sxl {
         void reserve(size_t newCap) {
             if (newCap > _capacity) {
                 newCap = newCap > _capacity * 2 ? newCap : _capacity * 2;
-                newPtr = _alloc.allocate(newCap);
+                Type* newPtr = _alloc.allocate(newCap);
                 for (size_t i = 0; i < _length; ++i) {
                     _alloc.construct(&newPtr[i], std::move_if_noexcept(_ptr[i]));
                     _alloc.destroy(&_ptr[i]);
@@ -394,7 +397,7 @@ namespace sxl {
                 _alloc.destroy(&_ptr[i - 1]);
             }
             ++_length;
-            _alloc.construct(&_ptr[j], value);
+            _alloc.construct(&_ptr[index], value);
             return index;
         }
         Type* insert(const Type* it, Type&& value) {
@@ -419,7 +422,7 @@ namespace sxl {
                 _alloc.destroy(&_ptr[i - 1]);
             }
             ++_length;
-            _alloc.construct(&_ptr[j], std::move(value));
+            _alloc.construct(&_ptr[index], std::move(value));
             return index;
         }
         Type* insert(const Type* it, size_t n,const Type& value) {
@@ -433,7 +436,7 @@ namespace sxl {
             }
             _length = _length + n;
             for (size_t i = j; i < j + n; ++i) {
-                _alloc.construct(&_ptr[i], val);
+                _alloc.construct(&_ptr[i], value);
             }
             return _ptr + j;
         }
@@ -447,7 +450,7 @@ namespace sxl {
             }
             _length = _length + n;
             for (size_t i = index; i < index + n; ++i) {
-                _alloc.construct(&_ptr[i], val);
+                _alloc.construct(&_ptr[i], value);
             }
             return index;
         }
@@ -473,7 +476,7 @@ namespace sxl {
         size_t insert(size_t index, InputIt first, InputIt last) {
             size_t n = last - first;
             if (n == 0)
-                return const_cast<Type*>(it);
+                return index;
             reserve(_length + n);
             for (size_t i = _length; i > index; --i) {
                 _alloc.construct(&_ptr[i + n - 1], std::move(_ptr[i - 1]));
@@ -486,10 +489,10 @@ namespace sxl {
             }
             return index;
         }
-        Type* insert(const Type* it, std::initializer_list<T> ilist) {
+        Type* insert(const Type* it, std::initializer_list<Type> ilist) {
             return insert(it, ilist.begin(), ilist.end());
         }
-        size_t insert(size_t index, std::initializer_list<T> ilist) {
+        size_t insert(size_t index, std::initializer_list<Type> ilist) {
             return insert(index, ilist.begin(), ilist.end());
         }
         //移除指定位置的元素
@@ -581,20 +584,64 @@ namespace sxl {
             reserve(n);
             _length = n;
             for (size_t i = 0; i < n; ++i, ++first) {
-                _allco.construct(&_ptr[i], *first);
+                _alloc.construct(&_ptr[i], *first);
             }
         }
-        void assign(std::initializer_list<T> ilist) {
+        void assign(std::initializer_list<Type> ilist) {
             assign(ilist.begin(), ilist.end());
         }
-        //寻找第一个符合cond的元素的索引
-        template<typename Condition>
-        size_t findFirstByCondition(Condition cond) {
-            for (size_t index = 0; index < _length; ++index) {
-                if (cond(_ptr[index]))
-                    return index;
+        //交换
+        void swap(LinearList& other) noexcept {
+            Type* temp_ptr = _ptr;
+            _ptr = other._ptr;
+            other._ptr = temp_ptr;
+
+            size_t temp_length = _length;
+            _length = other._length;
+            other._length = temp_length;
+
+            size_t temp_capacity = _capacity;
+            _capacity = other._capacity;
+            other._capacity = temp_capacity;
+
+            Alloc temp_alloc = _alloc;
+            _alloc = other._alloc;
+            other._alloc = temp_alloc;
+        }
+        bool operator == (const LinearList& other) const noexcept {
+            if (_length != other._length) {
+                return false;
             }
-            return _length;
+            for (size_t i = 0; i < _length; ++i) {
+                if (!(_ptr[i] == other._ptr[i])) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        inline bool operator != (const LinearList& other) const noexcept {
+            return !(*this == other);
+        }
+        bool operator<(const LinearList& other) const noexcept {
+            size_t minLength = std::min(_length, other._length);
+            for (size_t i = 0; i < minLength; ++i) {
+                if (_ptr[i] < other._ptr[i]) {
+                    return true;
+                }
+                if (_ptr[i] > other._ptr[i]) {
+                    return false;
+                }
+            }
+            return _length < other._length;
+        }
+        inline bool operator>(const LinearList& other) const noexcept {
+            return other < *this;
+        }
+        inline bool operator<=(const LinearList& other) const noexcept {
+            return !(*this > other);
+        }
+        inline bool operator>=(const LinearList& other) const noexcept {
+            return !(*this < other);
         }
     };
 }

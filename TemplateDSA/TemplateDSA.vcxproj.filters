@@ -16,6 +16,18 @@
     <Filter Include="头文件\List">
       <UniqueIdentifier>{bfc73d9a-1210-42b2-ae52-3fbfd501b9a9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\LinkList">
+      <UniqueIdentifier>{6f6dadf5-a6cd-478f-b6e6-a60c0c78f94a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Tree">
+      <UniqueIdentifier>{e3c210a4-c405-4bef-a05d-0a82d051d400}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Queue">
+      <UniqueIdentifier>{6caa1264-72fc-4677-837e-063d802b82ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Stack">
+      <UniqueIdentifier>{a9c27b88-be4a-4f86-8243-b3cdc110ce82}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allocator.hpp">
@@ -23,6 +35,51 @@
     </ClInclude>
     <ClInclude Include="List\LinearList.hpp">
       <Filter>头文件\List</Filter>
+    </ClInclude>
+    <ClInclude Include="List\Array.hpp">
+      <Filter>头文件\List</Filter>
+    </ClInclude>
+    <ClInclude Include="LinkedList\DoubleLinkedList.hpp">
+      <Filter>头文件\LinkList</Filter>
+    </ClInclude>
+    <ClInclude Include="LinkedList\LinkedList.hpp">
+      <Filter>头文件\LinkList</Filter>
+    </ClInclude>
+    <ClInclude Include="LinkedList\StaticDoubleLinkedList.hpp">
+      <Filter>头文件\LinkList</Filter>
+    </ClInclude>
+    <ClInclude Include="LinkedList\StaticLinkedList.hpp">
+      <Filter>头文件\LinkList</Filter>
+    </ClInclude>
+    <ClInclude Include="Tree\AVLTree.hpp">
+      <Filter>头文件\Tree</Filter>
+    </ClInclude>
+    <ClInclude Include="Tree\BinarySortTree.hpp">
+      <Filter>头文件\Tree</Filter>
+    </ClInclude>
+    <ClInclude Include="Tree\BinaryTree.hpp">
+      <Filter>头文件\Tree</Filter>
+    </ClInclude>
+    <ClInclude Include="Tree\BinaryWithParentTree.hpp">
+      <Filter>头文件\Tree</Filter>
+    </ClInclude>
+    <ClInclude Include="Tree\TheTreeHead.h">
+      <Filter>头文件\Tree</Filter>
+    </ClInclude>
+    <ClInclude Include="Tree\Tree.hpp">
+      <Filter>头文件\Tree</Filter>
+    </ClInclude>
+    <ClInclude Include="Queue\LinkQueue.hpp">
+      <Filter>头文件\Queue</Filter>
+    </ClInclude>
+    <ClInclude Include="Queue\StaticQueue.hpp">
+      <Filter>头文件\Queue</Filter>
+    </ClInclude>
+    <ClInclude Include="Stack\LinkStack.hpp">
+      <Filter>头文件\Stack</Filter>
+    </ClInclude>
+    <ClInclude Include="Stack\StaticStack.hpp">
+      <Filter>头文件\Stack</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
