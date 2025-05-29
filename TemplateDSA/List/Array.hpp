@@ -20,6 +20,48 @@ namespace sxl {
         using const_reverse_iterator = std::reverse_iterator<const Type*>;
         Type _elements[N];
     public:
+
+        Array() = default;
+        template <size_t M>
+        constexpr Array(const Type(&init)[M]) {
+            static_assert(M == N, "Initializer list size does not match array size");
+            for (int i = 0; i < N; ++i) {
+                _elements[i] = init[i];
+            }
+        }
+        template <size_t M>
+        Array(const Array<Type, M>& other) {
+            static_assert(M == N, "Initializer list size does not match array size");
+            for (int i = 0; i < N; ++i) {
+                _elements[i] = other[i];
+            }
+        }
+        template <size_t M>
+        Array& operator=(const Array<Type, M>& other) {
+            static_assert(M == N, "Initializer list size does not match array size");
+            if (this != &other) {
+                for (int i = 0; i < N; ++i) {
+                    _elements[i] = other._elements[i];
+                }
+            }
+            return *this;
+        }
+        template <size_t M>
+        Array(Array<Type, M>&&  other) noexcept {
+            static_assert(M == N, "Initializer list size does not match array size");
+            _elements = other._elements;
+            other._elements = nullptr;
+        }
+        template <size_t M>
+        Array& operator=(Array&& other) noexcept {
+            static_assert(M == N, "Initializer list size does not match array size");
+            if (this != &other) {
+                _elements = other._elements;
+                other._elements = nullptr;
+            }
+            return *this;
+        }
+
         Type& operator[](size_t index) noexcept {
             return _elements[index];
         }

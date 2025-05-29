@@ -1,8 +1,6 @@
 #pragma once
-#include "myHead.h"
-#include "StaticStack.hpp"
-#include "StaticQueue.hpp"
-#include "LinearList.hpp"
+
+#include <functional>
 
 template<typename T>
 struct TreeNodeOrder{

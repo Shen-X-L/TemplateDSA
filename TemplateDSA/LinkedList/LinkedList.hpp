@@ -1,365 +1,489 @@
 #pragma once
-#include "myHead.h"
-
+#include <initializer_list>
+#include <functional>
 template<typename T>
 class LinkedList {
-protected:
-	template<typename T>
-	struct ListNode {//链表结构
-		using Node = ListNode<T>;
-		T element;
-		Node* next;
-		ListNode() :element() {};
-		ListNode(const T& in, Node* ptr = nullptr) :element(in), next(ptr) {};
-		ListNode(T&& in, Node* ptr = nullptr) :element(std::move(in)), next(ptr) {};
+private:
+	// 前向声明迭代器类
+	template<typename U>
+	class LinkedListIterator;
+	// 节点类定义
+	template<typename U>
+	class _Node {
+	public:
+		using node_type = _Node<U>;
+		friend class LinkedList;
+		friend class LinkedListIterator<T>;
+	private:
+		U _data;
+		node_type* _next;
+	public:
+		explicit _Node(const U& value, node_type* ptr = nullptr)
+			: _data(value), _next(ptr) {}
+		explicit _Node(U&& value, node_type* ptr = nullptr)
+			: _data(std::move(value)), _next(ptr) {}
 	};
-	using Node = ListNode<T>;
-	Node* head;  //链表头指针  
-	size_t length;//长度
 public:
-	//构造函数
-	LinkedList(size_t initialSize = 0) 
-		:head(nullptr), length(initialSize) {
-		if (!length) {
+	using value_type = T;
+	using reference = T&;
+	using const_reference = const T&;
+	using size_type = std::size_t;
+	using node_type = _Node<T>;
+	using iterator = LinkedListIterator<T>;
+	using const_iterator = LinkedListIterator<const T>;
+	friend class LinkedListIterator<T>;
+	friend class LinkedListIterator<const T>;
+private:
+	node_type* _head;  // 头指针
+	size_type _length; // 链表长度
+public:
+	// 构造 initialSize 个Type默认构造对象
+	/*
+			size=length=3 head=0->1->2
+			i=1 next=1 prev=0->1 prev=1 ++i
+			i=2 next=2 prev=1->2 prev=2 ++i
+			i=3 end
+	*/
+	LinkedList(size_type initialSize = 0)
+		: _head(nullptr), _length(initialSize) {
+		if (_length == 0) { return; }
+		_head = new node_type(T());
+		node_type* prev = _head;
+		for (size_type i = 1; i < _length; ++i) {
+			prev->_next = new node_type(T());
+			prev = prev->_next;
+		}
+	}
+
+	// 构造 initialSize 个value对象
+	LinkedList(size_type initialSize, const T& value)
+		: _head(nullptr), _length(initialSize) {
+		if (_length == 0) { return; }
+		_head = new node_type(value);
+		node_type* prev = _head;
+		for (size_type i = 1; i < _length; ++i) {
+			prev->_next = new node_type(value);
+			prev = prev->_next;
+		}
+	}
+
+	// 迭代器范围构造函数
+	template<typename InputIt>
+	LinkedList(InputIt first, InputIt last)
+		: _head(nullptr), _length(std::distance(first, last)) {
+		if (_length == 0) { return; }
+		_head = new node_type(*first);
+		node_type* prev = _head;
+		for (++first; first != last; ++first) {
+			prev->_next = new node_type(*first);
+			prev = prev->_next;
+		}
+	}
+
+	// 初始化列表构造
+	LinkedList(std::initializer_list<T> init)
+		: LinkedList(init.begin(), init.end()) {}; // 委托给区间构造函数
+
+	// 拷贝构造函数
+	LinkedList(const LinkedList& other)
+		: _head(nullptr), _length(other._length) {
+		if (other._head == nullptr) {
+			_length = 0;
 			return;
-		}//size=length=3 head=0->1->2
-		head = new Node(T());//head=0
-		Node* prev = head;//前驱
-		for (size_t i = 1; i < length; ++i) {//i=1 next=1 prev=0->1 prev=1 ++i
-			prev->next = new Node(T());//i=2 next=2 prev=1->2 prev=2 ++i
-			prev = prev->next;//i=3 end
+		}
+		_head = new node_type(other._head->_data);
+		node_type* prev = _head;
+		for (node_type* otherPrev = other._head->_next;
+			otherPrev != nullptr;
+			otherPrev = otherPrev->_next) {
+			prev->_next = new node_type(otherPrev->_data);
+			prev = prev->_next;
 		}
 	}
-	//创建size个in元素
-	LinkedList(size_t initialSize, const T& in) 
-		:head(nullptr), length(initialSize) {
-		if (!length) {
-			return;
-		}//size=length=3 head=0->1->2
-		head = new Node(in);//head=0
-		Node* prev = head;//前驱
-		for (size_t i = 1; i < length; ++i) {//i=1 next=1 prev=0->1 prev=1 ++i
-			prev->next = new Node(T(in));//i=2 next=2 prev=1->2 prev=2 ++i
-			prev = prev->next;//i=3 end
-		}
+
+	// 移动构造函数
+	LinkedList(LinkedList&& other)noexcept
+		: _head(other._head), _length(other._length) {
+		other._head = nullptr;
+		other._length = 0;
 	}
-	//列表初始化
-	LinkedList(std::initializer_list<T> in) 
-		:head(nullptr), length(in.size()) {
-		if (!length) {
-			return;
+
+	// 拷贝赋值函数
+	LinkedList& operator=(const LinkedList& other) {
+		if (this != &other) {
+			clear();
+			if (other._head == nullptr) {
+				_length = 0;
+				return *this;
+			}
+			_head = new node_type(other._head->_data);
+			node_type* prev = _head;
+			for (node_type* otherPrev = other._head->_next;
+				otherPrev != nullptr;
+				otherPrev = otherPrev->_next) {
+				prev->_next = new node_type(otherPrev->_data);
+				prev = prev->_next;
+			}
+			_length = other._length;
 		}
-		const T* it = in.begin();
-		head = new Node(*it);
-		Node* prev = head;//前驱
-		for (++it; it != in.end(); ++it) {
-			prev->next = new Node(*it);
-			prev = prev->next;
-		}
+		return *this;
 	}
-	//拷贝构造
-	LinkedList(const LinkedList& other) 
-		:head(nullptr), length(other.length) {
-		if (other.head == nullptr) {
-			length = 0;
-			return;
+
+	// 移动赋值函数
+	LinkedList& operator=(LinkedList&& other) noexcept {
+		if (this != &other) {
+			clear();
+			_head = other._head;
+			_length = other._length;
+			other._head = nullptr;
+			other._length = 0;
 		}
-		head = new Node(other.head->element);
-		Node* prev = head;//前驱
-		for (Node* tempother = other.head->next; tempother != nullptr; tempother = tempother->next) {
-			prev->next = new Node(tempother->element);
-			prev = prev->next;
-		}
+		return *this;
 	}
-	//移动构造
-	LinkedList(LinkedList&& other)noexcept 
-		:head(other.head), length(other.length) {
-		other.head = nullptr;
-		other.length = 0;
+
+	// 支持聚合初始化赋值
+	LinkedList& operator=(std::initializer_list<T> init) {
+		LinkedList temp(init);
+		swap(*this, temp);
+		return *this;
 	}
-	//移动构造
+
 	~LinkedList() {
 		clear();
 	}
-	//清空链表
-	inline void clear() {
-		_clearPtr(head);
+public:
+
+	// 返回首位元素
+	T& front() {
+		if (empty()) throw std::out_of_range("LinkedList is empty");
+		return _head->_data;
 	}
-	//清空ptr以及之后的所有链表
-	void _clearPtr(Node* ptr) {
-		Node* next = nullptr;//后继
-		for (; ptr != nullptr;) {//head=0->1->2->3 ptr=1
-			next = ptr->next;//next=2 delete 1 ptr=next=2
-			delete ptr;//next=3 delete 2  ptr=next=3
-			ptr = next;//next=null delete 3 ptr=null end
-		}
-		_alignLength();
+	const T& front() const noexcept {
+		if (empty()) throw std::out_of_range("LinkedList is empty");
+		return _head->_data;
 	}
-	//拷贝赋值
-	LinkedList& operator=(const LinkedList& other) {
-		if (this != &other){
-			//清空链表
-			clear();
-			//拷贝链表
-			if (other.head == nullptr) {
-				length = 0;
-				return *this;
-			}
-			length = other.length;
-			head = new Node(other.head->element);
-			Node* prev = head;//前驱
-			for (Node* tempother = other.head->next; tempother != nullptr; tempother = tempother->next) {
-				prev->next = new Node(tempother->element);
-				prev = prev->next;
-			}
-		}
-		return *this;
-	}
-	//移动赋值
-	LinkedList& operator=(LinkedList&& other) noexcept {
-		if (this != &other) {
-			//清空链表
-			clear();
-			length = other.length;
-			head = other.head;
-			other.length = 0;
-			other.head = nullptr;
-		}
-		return *this;
-	}
-	//校准链表长度 
-	size_t _alignLength() {//head=0->1->2
-		length = 0;
-		for (Node* ptr = head; ptr != nullptr; ++length) { ptr = ptr->next; }//ptr=0 i=0;ptr=1 i=1;ptr=2 i=2;ptr=null i=3;end
-		return length;
-	}
-	//返回链表长度
-	inline size_t size() const {
-		return length;
-	}
-	//如果链表为空 返回TRUE
-	inline bool empty() const {
-		return head == nullptr;
-	}
-	//反转链表
-	void reverse() {
-		if (head == nullptr || head->next == nullptr) {
-			return; // 空链表或只有一个节点，无需反转
-		}
-		Node* prev = nullptr;
-		Node* curr = head;
-		Node* nextNode = nullptr;
-		while (curr != nullptr) {
-			nextNode = curr->next; // 保存下一个节点
-			curr->next = prev; // 当前节点指向前一个节点，实现反转
-			prev = curr; // 更新前一个节点为当前节点
-			curr = nextNode; // 更新当前节点为下一个节点
-		}
-		head = prev; // 更新头指针为原来链表的尾节点
-	}
-	//返回指针指向元素
-	inline static T& getElem(Node* ptr) {
-		return ptr->element;
-	}
-	inline static const T& getElem(Node* ptr) const{
-		return ptr->element;
-	}
-	//返回指针后继
-	inline static Node* getNext(Node* ptr) {
-		return ptr->next;
-	}
-	inline static const Node* getNext(Node* ptr) const {
-		return ptr->next;
-	}
-	//访问第index链表指针
-	Node* _atPtr(size_t index) {
-		if (index >= length) {
-#ifdef DEBUG
-			throw std::out_of_range("Index out of range");
-#endif
-			return nullptr;
-		}
-		Node* ptr = head;//ptr=head=0->1->2->3 index=2
-		for (size_t i = 0; i < index && ptr != nullptr; ++i) { ptr = ptr->next; }//i=0 ptr=1 ++i;i=1 ptr=2 ++i;i=2 end
-		return ptr;
-	}
-	const Node* _atPtr(size_t index) const{
-		if (index >= length) {
-#ifdef DEBUG
-			throw std::out_of_range("Index out of range");
-#endif
-			return nullptr;
-		}
-		Node* ptr = head;//ptr=head=0->1->2->3 index=2
-		for (size_t i = 0; i < index && ptr != nullptr; ++i) { ptr = ptr->next; }//i=0 ptr=1 ++i;i=1 ptr=2 ++i;i=2 end
-		return ptr;
-	}
-	//访问元素索引
-	T& operator[](size_t index) {
-		return  _atPtr(index)->element;
-	}
-	//访问元素索引
-	const T& operator[](size_t index) const {
-		return  _atPtr(index)->element;
-	}
-	//在指定指针的后继插入元素
-	//指定指针可能不是本链表指针,小心使用
-	//属于内部函数,故没有对length修改
-	static Node* _insertNextPtr(const Node*& ptr, const T& value) {
-		if (ptr != nullptr) {
-			Node* next = new Node(value, ptr->next);
-			ptr->next = next;
-			return next;
-		}
-		return nullptr;
-	}
-	//在指定指针的后继删除元素
-	//指定指针可能不是本链表指针,小心使用
-	static Node* _removeNextPtr(const Node*& ptr) {
-		if (ptr != nullptr && ptr->next != nullptr) {
-			Node* next = ptr->next;
-			ptr->next = next->next;
-			delete next;
-			return ptr;
-		}
-		return nullptr;
-	}
-	//在指定位置插入元素
-	//在0-1-2 输入(3 new) 0-1-2-new
-	void insert(size_t index, const T& value) {
-		if (index > length) {
-#ifdef DEBUG
-			throw std::out_of_range("Index out of range");
-#endif //DEBUG
-			return;
-		}
-		if (index) {
-			Node* prev = _atPtr(index - 1);
-			if (prev != nullptr) {
-				_insertNextPtr(prev, value);
-			}
-			else {
-#ifdef DEBUG
-				throw std::out_of_range("Invalid index");// 处理 prev 为 nullptr 的情况
-#endif
-				return;
-			}
-		}
-		else {
-			Node* ptr = new Node(value,head);//head=0->1  new->0->1
-			head = ptr;//head=new->0->1
-		}
-		++length;
-	}
-	//删除指定索引位置的元素  
-	void remove(size_t index) {
-		if (index >= length) {
-#ifdef DEBUG
-			throw std::out_of_range("Index out of range");
-#endif //DEBUG
-			return;
-		}
-		if (index) {
-			Node* prev = _atPtr(index - 1);
-			if (prev != nullptr) {
-				_removeNextPtr(prev, value);
-			}
-			else {
-#ifdef DEBUG
-				throw std::out_of_range("Invalid index");// 处理 prev 为 nullptr 的情况
-#endif
-				return;
-			}
-		}
-		else {
-			Node* ptr = head;//head=ptr=0->1->2
-			head = ptr->next;//head=1->2 ptr=0
-			delete ptr;
-		}
-		--length;
-	}
-	//末尾插入元素
-	void push_back(const T& value) {
-		Node* prev;
-		for (prev = head; prev->next != nullptr; prev = prev->next) {};
-		prev->next = new Node(value);
-		++length;
-	}
-	//末尾移除元素
-	void pop_back() {
-		if (head == nullptr) {
-			length = 0;
-			return;
-		}
-		if (head->next == nullptr) {
-			delete head;
-			length = 0;
-			return;
-		}
-		Node* prev;
-		for (prev = head; prev->next->next != nullptr; prev = prev->next) {};
-		delete prev->next;
-		prev->next = nullptr;
-		--length;
-	}
-	//首位添加元素
+
+	// 添加首位元素
 	void push_front(const T& value) {
-		Node* ptr = head;
-		head = new Node(value);
-		head->next = ptr;
-		++length;
+		_head = new node_type(value, _head);
+		++_length;
+		return;
 	}
-	//首位移除元素
+	void push_front(T&& value) {
+		_head = new node_type(std::move(value), _head);
+		++_length;
+		return;
+	}
+	// 构造首位元素
+	template<typename... Args>
+	void emplace_front(Args&&... args) {
+		_head = new node_type(T(std::forward<Args>(args)...), _head);
+		++_length;
+		if (_length == 1) _tail = _head;
+	}
+	
+	// 移除首位元素
 	void pop_front() {
-		if (head == nullptr) {
-			length = 0;
+		if (empty()) throw std::out_of_range("LinkedList is empty");
+		node_type* toDelete = _head;
+		_head = _head->_next;
+		delete toDelete;
+		--_length;
+	}
+
+	// 在某个元素后插入新元素 返回迭代器指向新元素
+	iterator insert_after(iterator pos, const T& value) {
+		if (pos == end()) throw std::out_of_range("Invalid position");
+		node_type* new_node = new node_type(value, pos.ptr->next);
+		pos.ptr->next = new_node;
+		++_length;
+		return iterator(new_node);
+	}
+	iterator insert_after(iterator pos, T&& value) {
+		if (pos == end()) throw std::out_of_range("Invalid position");
+		node_type* new_node = new node_type(std::move(value), pos.ptr->next);
+		pos.ptr->next = new_node;
+		++_length;
+		return iterator(new_node);
+	}
+	// 构造插入对象
+	template<typename... Args>
+	iterator emplace_after(iterator pos, Args&&... args) {
+		if (pos == end()) throw std::out_of_range("Invalid position");
+		node_type* new_node = new node_type(T(std::forward<Args>(args)...), pos.ptr->next);
+		pos.ptr->next = new_node;
+		++_length;
+		return iterator(new_node);
+	}
+	// 在索引后插入元素
+	void insert(size_type index, const T& value) {
+		if (index > _length) throw std::out_of_range("Invalid position");
+		if (index == 0) {
+			push_front(value);
 			return;
 		}
-		Node* ptr = head->next;
-		delete head;
-		head = ptr;
-		--length;
+		node_type* prev = _getNodeAt(index - 1);
+		insert_after(iterator(prev), value);
 	}
-	//对所以元素执行func
-	template<typename Function>
-	inline void forEachFunction(Function func) {
-		for (Node* ptr = head; ptr != nullptr; ptr = ptr->next) {
-			func(ptr->element);
+	void insert(size_type index, T&& value) {
+		if (index > _length) throw std::out_of_range("Invalid position");
+		if (index == 0) {
+			push_front(std::move(value));
+			return;
 		}
+		node_type* prev = _getNodeAt(index - 1);
+		insert_after(iterator(prev), std::move(value));
 	}
-	//寻找第一个符合cond的元素的索引
-	template<typename Condition>
-	inline Node* findFirstByCondition(Condition cond) {
-		for (Node* ptr = head; ptr != nullptr; ptr = ptr->next) {
-			if (cond(ptr->element))
-				return ptr;
+	// 在索引后构造并插入元素
+	template<typename... Args>
+	void emplace(size_type index, Args&&... args) {
+		if (index > _length) throw std::out_of_range("Invalid position");
+		if (index == 0) {
+			emplace_front((T(std::forward<Args>(args)...));
+			return;
 		}
-		return nullptr;
+		node_type* prev = _getNodeAt(index - 1);
+		emplace_after(iterator(prev), (T(std::forward<Args>(args)...));
 	}
-	//对符合cond元素执行func
-	template<typename Condition, typename Function>
-	inline void forEachFunctionByCondition(Condition cond, Function func) {
-		for (Node* ptr = head; ptr != nullptr; ptr = ptr->next) {
-			if (cond(ptr->element))
-				func(ptr->element);
+
+	// 在某个元素后删除元素 返回迭代器指向被删除的后一个元素
+	iterator erase_after(iterator pos) {
+		if (pos == end() || pos.ptr->next == nullptr)
+			throw std::out_of_range("Invalid position");
+		node_type* toDelete = pos.ptr->next;
+		pos.ptr->next = toDelete->next;
+		delete toDelete;
+		--_length;
+		return iterator(pos.ptr->next);
+	}
+	// 删除索引元素
+	void erase(size_type index) {
+		if (index >= _length) throw std::out_of_range("Invalid position");
+		if (index == 0) {
+			node_type* toDelete = _head;
+			_head = _head->next;
+			delete toDelete;
+			--_length;
+			return begin();
 		}
+		node_type* prev = _getNodeAt(index - 1);
+		return erase_after(iterator(prev));
 	}
-	//从index开始寻找与value相等元素,返回所在指针,如果没有返回nullptr
-	inline Node* findPtrInOrder(const T& value, size_t index = 0) {//head=0-1-2-3-4-5 index=2 value=4
-		for (Node* ptr = _atPtr(index); ptr != nullptr; ptr = ptr->next;) {//i=2 ptr=2;i=3 ptr=3;i=4 ptr=4;end
-			if (ptr->element == value) {
-				return ptr;
+
+
+	// 安全访问
+	T& at(size_type index) {
+		if (index >= _length) throw std::out_of_range("Invalid position");
+		return _getNodeAt(index)->_data;
+	}
+	const T& at(size_type index) const {
+		if (index >= _length) throw std::out_of_range("Invalid position");
+		return _getNodeAt(index)->_data;
+	}
+
+	// 截断链表并返回截断链表
+	LinkedList cut_after(iterator pos) {
+		if (pos == end()) throw std::out_of_range("Invalid position");
+		LinkedList newList;
+		if (pos.ptr->next == nullptr) return newList;
+		newList._head = pos.ptr->next;
+		pos.ptr->next = nullptr;
+		// 获取长度
+		size_type cutLength = 0;
+		node_type* node = newList._head;
+		while (node != nullptr) {
+			++cutLength;
+			node = node->next;
+		}
+		newList._length = cutLength;
+		_length -= cutLength;
+		return newList;
+	}
+	LinkedList cut(size_type index) {
+		if (index >= _length) throw std::out_of_range("Invalid position");
+		if (index == 0) {
+			LinkedList newList;
+			newList._head = _head;
+			newList._length = _length;
+			_head = nullptr;
+			_length = 0;
+			return newList;
+		}
+		node_type* prev = _getNodeAt(index - 1);
+		return cut_after(iterator(prev));
+	}
+
+	// 中断为两节 移动衔接其他链表再重链接两节
+	LinkedList link_after(iterator pos, LinkedList&& other) {
+		if (pos == end()) throw std::out_of_range("Invalid position");
+		if (other.empty()) return;
+		node_type* oldNext = pos.ptr->next;
+		pos.ptr->next = other._head;
+		node_type* tail = other._head;
+		while (tail->next != nullptr) {
+			tail = tail->next;
+		}
+		tail->next = oldNext;
+		_length += other._length;
+		other._head = nullptr;
+		other._length = 0;
+	}
+	LinkedList link(size_type index, LinkedList&& other) {
+		if (index > _length) throw std::out_of_range("Invalid position");
+		if (index == 0) {
+			if (empty()) {
+				*this = std::move(other);
+			}
+			else {
+				node_type* tail = other._head;
+				while (tail != nullptr && tail->next != nullptr) {
+					tail = tail->next;
+				}
+				if (tail != nullptr) {
+					tail->next = _head;
+					_head = other._head;
+					_length += other._length;
+					other._head = nullptr;
+					other._length = 0;
+				}
+			}
+			return;
+		}
+		node_type* prev = _getNodeAt(index - 1);
+		link_after(iterator(prev), std::move(other));
+	}
+
+	// 查询是否为空
+	bool empty() const noexcept { return _length == 0; }
+
+	// 获取链表长度
+	size_type size() const noexcept { return _length; }
+
+	//清理全链表
+	void clear() {
+		node_type* temp;
+		while (_head) {
+			temp = _head;
+			_head = _head->_next;
+			delete temp;
+		}
+		_length = 0;
+	}
+
+	// 预分配内存（无实际作用，仅为兼容STL接口）
+	void reserve(size_type new_cap) { /* 链表无需预留空间 */ }
+
+	// 调整大小
+	void resize(size_type count, const value_type& value = value_type()) {
+		if (_length > count) {// 缩减大小 - 使用 _clearPtr 一次性截断
+			if (count == 0) {
+				clear();
+			}
+			else {
+				node_type* prev = _getNodeAt(count - 1);
+				_clearPtr(prev); // 清除 prev 之后的所有节点
+				prev->_next = nullptr;
+				_tail = prev;   // 更新尾指针
+				_length = count;
+			}
+			return;
+		}
+		if (_length < count) {// 增大大小 - 批量插入
+			size_type to_add = count - _length;
+			LinkedList temp(to_add, value); // 创建临时链表
+			if (empty()) {
+				*this = std::move(temp);   // 直接接管临时链表
+			}
+			else {
+				_tail->_next = temp._head;  // 链接到尾部
+				_tail = temp._getNodeAt(to_add - 1); // 更新尾指针
+				_length = count;
+				temp._head = nullptr;       // 防止临时链表析构时删除节点
+				temp._length = 0;
 			}
 		}
-		return nullptr;
 	}
-	//从index开始寻找与value相等元素,返回所在索引,如果没有返回length
-	inline size_t findIndexInOrder(const T& value, size_t startIndex = 0) {//head=0-1-2-3-4-5 index=2 value=4
-		for (Node* ptr = _atPtr(startIndex); ptr != nullptr && startIndex < length; ptr = ptr->next, ++startIndex;) {//i=2 ptr=2;i=3 ptr=3;i=4 ptr=4;end
-			if (ptr->element == value) {
-				return startIndex;
-			}
+
+private:
+	// 清除ptr后续所有链表
+	void _clearPtr(node_type* ptr) {
+		for (node_type* tempPtr = ptr->_next //head=0->1->2->3 ptr=0
+			; ptr != nullptr;) {    //ptr=1 next=2 delete 1
+			ptr = tempPtr;          //ptr=2 next=3 delete 2
+			tempPtr = ptr->_next; //ptr=3 next=null delete 3
+			delete ptr;             //ptr=null
+			--_length;
 		}
-		return length;
+	}
+
+	// 获取索引对应指针
+	node_type* _getNodeAt(size_type index) const {
+		if(index >= _length) throw std::out_of_range("Invalid position");
+		node_type* node = _head;
+		for (size_type i = 0; i < index; ++i) {
+			node = node->next;
+		}
+		return node;
+	}
+
+public:
+	template<typename T>
+	void swap(LinkedList<T>& lhs, LinkedList<T>& rhs) noexcept {
+		lhs.swap(rhs);
+	}
+
+	friend void swap(LinkedList& other) noexcept {
+		using std::swap;
+		swap(_head, other._head);
+		swap(_length, other._length);
+	}
+public:
+	// 迭代器相关操作
+	iterator begin() noexcept { return iterator(_head); }
+	iterator end() noexcept { return iterator(nullptr); }
+	iterator before_end() noexcept {
+		return empty() ? end() : iterator(_getNodeAt(_length - 1));
+	}
+	const_iterator cbegin() const noexcept { return begin(); }
+	const_iterator cend() const noexcept { return end(); }
+	const_iterator cbefore_end() const noexcept {return before_end();}
+};
+//LinkedList内
+template<typename T>
+template<typename U>
+class LinkedList<T>::LinkedListIterator {
+public:
+	using iterator_category = std::forward_iterator_tag;
+	using value_type = U;
+	using difference_type = std::ptrdiff_t;
+	using pointer = U*;
+	using reference = U&;
+	using node_type = LinkedList<T>::_Node<U>;
+	using iterator = LinkedList<T>::LinkedListIterator;
+	friend class LinkedList<T>;
+private:
+	node_type* _ptr;// 指向链表节点的指针
+public:
+	explicit LinkedListIterator(node_type* ptr) : _ptr(ptr) {}
+
+	T& operator*() const { return _ptr->_data; }
+	T* operator->() const { return &_ptr->_data; }
+
+	iterator& operator++() {
+		_ptr = _ptr->_next;
+		return *this;
+	}
+
+	iterator operator++(int) {
+		iterator tmp = *this;
+		++(*this);
+		return tmp;
+	}
+
+	bool operator==(const iterator& other) const {
+		return _ptr == other._ptr;
+	}
+	bool operator!=(const iterator& other) const {
+		return !(*this == other);
 	}
 };

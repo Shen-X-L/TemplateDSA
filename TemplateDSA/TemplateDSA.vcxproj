@@ -128,6 +128,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="allocator.hpp" />
+    <ClInclude Include="Heap.hpp" />
     <ClInclude Include="LinkedList\DoubleLinkedList.hpp" />
     <ClInclude Include="LinkedList\LinkedList.hpp" />
     <ClInclude Include="LinkedList\StaticDoubleLinkedList.hpp" />
@@ -146,7 +147,7 @@
     <ClInclude Include="Tree\Tree.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Text.cpp" />
+    <ClCompile Include="Test.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

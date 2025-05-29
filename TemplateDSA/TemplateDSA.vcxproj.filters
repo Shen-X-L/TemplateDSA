@@ -28,6 +28,9 @@
     <Filter Include="头文件\Stack">
       <UniqueIdentifier>{a9c27b88-be4a-4f86-8243-b3cdc110ce82}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Heap">
+      <UniqueIdentifier>{5b2fda35-be47-4a0e-8c06-2cc1ace845e2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allocator.hpp">
@@ -81,9 +84,12 @@
     <ClInclude Include="Stack\StaticStack.hpp">
       <Filter>头文件\Stack</Filter>
     </ClInclude>
+    <ClInclude Include="Heap.hpp">
+      <Filter>头文件\Heap</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Text.cpp">
+    <ClCompile Include="Test.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

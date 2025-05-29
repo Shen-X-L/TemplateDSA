@@ -2,6 +2,7 @@
 #include "TheTreeHead.h"
 #include "BinaryTree.hpp"
 
+
 template<typename T, typename Compare = std::less<T>>
 class BinarySortTree {
 public:
