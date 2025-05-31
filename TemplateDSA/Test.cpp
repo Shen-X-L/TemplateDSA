@@ -1,19 +1,16 @@
 #include <iostream>
 #include <forward_list>
+#include "LinkedList/TailLinkedList.hpp"
+#include "LinkedList/LinkedList.hpp"
+
+
 int main() {
-    std::forward_list<int> l = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-
-    l.erase_after(l.before_begin()); // ÒÆ³ýÊ×ÔªËØ
-
-    for (auto n : l)
-        std::cout << n << ' ';
-    std::cout << '\n';
-
-    l.erase_after(l.erase_after(l.before_begin()));
-
-    for (auto n : l)
-        std::cout << n << ' ';
-    std::cout << '\n';
+	TailLinkedList<int> a = {1,2,3,4,5,6,7,8,9};
+	a.cut(9);
+	for (auto temp : a) {
+		std::cout << temp << " ";
+	}
+	LinkedList<int>b;
 }
 
 

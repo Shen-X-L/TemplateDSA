@@ -87,6 +87,9 @@
     <ClInclude Include="Heap.hpp">
       <Filter>头文件\Heap</Filter>
     </ClInclude>
+    <ClInclude Include="LinkedList\TailLinkedList.hpp">
+      <Filter>头文件\LinkList</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Test.cpp">

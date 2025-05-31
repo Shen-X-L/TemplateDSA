@@ -133,6 +133,7 @@
     <ClInclude Include="LinkedList\LinkedList.hpp" />
     <ClInclude Include="LinkedList\StaticDoubleLinkedList.hpp" />
     <ClInclude Include="LinkedList\StaticLinkedList.hpp" />
+    <ClInclude Include="LinkedList\TailLinkedList.hpp" />
     <ClInclude Include="List\Array.hpp" />
     <ClInclude Include="List\LinearList.hpp" />
     <ClInclude Include="Queue\LinkQueue.hpp" />
