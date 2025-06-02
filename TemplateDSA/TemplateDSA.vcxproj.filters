@@ -90,9 +90,21 @@
     <ClInclude Include="LinkedList\TailLinkedList.hpp">
       <Filter>头文件\LinkList</Filter>
     </ClInclude>
+    <ClInclude Include="Tree\NodeBinaryTree.hpp">
+      <Filter>头文件\Tree</Filter>
+    </ClInclude>
+    <ClInclude Include="_Common.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="BloomFilter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Test.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BloomFilter.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

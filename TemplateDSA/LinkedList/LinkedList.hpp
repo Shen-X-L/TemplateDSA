@@ -19,10 +19,10 @@ private:
 		U _data;
 		node_type* _next;
 	public:
-		explicit _Node(const U& value, node_type* ptr = nullptr)
-			: _data(value), _next(ptr) {}
-		explicit _Node(U&& value, node_type* ptr = nullptr)
-			: _data(std::move(value)), _next(ptr) {}
+		explicit _Node(const U& value, node_type* _ptr = nullptr)
+			: _data(value), _next(_ptr) {}
+		explicit _Node(U&& value, node_type* _ptr = nullptr)
+			: _data(std::move(value)), _next(_ptr) {}
 	};
 public:
 	using value_type = T;
@@ -46,7 +46,7 @@ public:
 			i=2 next=2 prev=1->2 prev=2 ++i
 			i=3 end
 	*/
-	LinkedList(size_type initialSize)
+	explicit LinkedList(size_type initialSize)
 		: _head(nullptr), _length(initialSize) {
 		if (_length == 0) { return; }
 		_head = new node_type(T());
@@ -145,7 +145,7 @@ public:
 	// 支持聚合初始化赋值
 	LinkedList& operator=(std::initializer_list<T> init) {
 		LinkedList temp(init);
-		swap(*this, temp);
+		swap(temp);
 		return *this;
 	}
 
@@ -153,7 +153,6 @@ public:
 		clear();
 	}
 public:
-
 	// 返回首位元素
 	T& front() {
 		if (empty()) throw std::out_of_range("LinkedList is empty");
@@ -194,24 +193,15 @@ public:
 	// 在某个元素后插入新元素 返回迭代器指向新元素
 	iterator insert_after(iterator pos, const T& value) {
 		if (pos == end()) throw std::out_of_range("Invalid position");
-		node_type* new_node = new node_type(value, pos.ptr->_next);
-		pos.ptr->_next = new_node;
+		node_type* new_node = new node_type(value, pos._ptr->_next);
+		pos._ptr->_next = new_node;
 		++_length;
 		return iterator(new_node);
 	}
 	iterator insert_after(iterator pos, T&& value) {
 		if (pos == end()) throw std::out_of_range("Invalid position");
-		node_type* new_node = new node_type(std::move(value), pos.ptr->_next);
-		pos.ptr->_next = new_node;
-		++_length;
-		return iterator(new_node);
-	}
-	// 构造插入对象
-	template<typename... Args>
-	iterator emplace_after(iterator pos, Args&&... args) {
-		if (pos == end()) throw std::out_of_range("Invalid position");
-		node_type* new_node = new node_type(T(std::forward<Args>(args)...), pos.ptr->_next);
-		pos.ptr->_next = new_node;
+		node_type* new_node = new node_type(std::move(value), pos._ptr->_next);
+		pos._ptr->_next = new_node;
 		++_length;
 		return iterator(new_node);
 	}
@@ -234,27 +224,36 @@ public:
 		node_type* prev = _get_node_at(index - 1);
 		insert_after(iterator(prev), std::move(value));
 	}
+	// 构造插入对象
+	template<typename... Args>
+	iterator emplace_after(iterator pos, Args&&... args) {
+		if (pos == end()) throw std::out_of_range("Invalid position");
+		node_type* new_node = new node_type(T(std::forward<Args>(args)...), pos._ptr->_next);
+		pos._ptr->_next = new_node;
+		++_length;
+		return iterator(new_node);
+	}
 	// 在索引后构造并插入元素
 	template<typename... Args>
 	void emplace(size_type index, Args&&... args) {
 		if (index > _length) throw std::out_of_range("Invalid position");
 		if (index == 0) {
-			emplace_front(std::forward<Args>(args));
+			emplace_front(std::forward<Args>(args)...);
 			return;
 		}
 		node_type* prev = _get_node_at(index - 1);
-		emplace_after(iterator(prev), std::forward<Args>(args));
+		emplace_after(iterator(prev), std::forward<Args>(args)...);
 	}
 
 	// 在某个元素后删除元素 返回迭代器指向被删除的后一个元素
 	iterator erase_after(iterator pos) {
-		if (pos == end() || pos.ptr->_next == nullptr)
+		if (pos == end() || pos._ptr->_next == nullptr)
 			throw std::out_of_range("Invalid position");
-		node_type* toDelete = pos.ptr->_next;
-		pos.ptr->_next = toDelete->_next;
+		node_type* toDelete = pos._ptr->_next;
+		pos._ptr->_next = toDelete->_next;
 		delete toDelete;
 		--_length;
-		return iterator(pos.ptr->_next);
+		return iterator(pos._ptr->_next);
 	}
 	// 删除索引元素
 	void erase(size_type index) {
@@ -286,9 +285,9 @@ public:
 	LinkedList cut_after(iterator pos) {
 		if (pos == end()) throw std::out_of_range("Invalid position");
 		LinkedList newList;
-		if (pos.ptr->_next == nullptr) return newList;
-		newList._head = pos.ptr->_next;
-		pos.ptr->_next = nullptr;
+		if (pos._ptr->_next == nullptr) return newList;
+		newList._head = pos._ptr->_next;
+		pos._ptr->_next = nullptr;
 		// 获取长度
 		size_type cutLength = 0;
 		node_type* node = newList._head;
@@ -324,8 +323,8 @@ public:
 	LinkedList& splice_after(iterator pos, LinkedList&& other) {
 		if (pos == end()) throw std::out_of_range("Invalid position");
 		if (other.empty()) return;
-		node_type* oldNext = pos.ptr->_next;
-		pos.ptr->_next = other._head;
+		node_type* oldNext = pos._ptr->_next;
+		pos._ptr->_next = other._head;
 		node_type* tail = other._head;
 		while (tail->_next != nullptr) {
 			tail = tail->_next;
@@ -345,7 +344,7 @@ public:
 	LinkedList& splice(size_type index, LinkedList&& other) {
 		if (index > _length) throw std::out_of_range("Invalid position");
 		if (index == 0) {
-			return splice_front(other);
+			return splice_front(std::move(other));
 		}
 		node_type* prev = _get_node_at(index - 1);
 		return splice_after(iterator(prev), std::move(other));
@@ -375,6 +374,18 @@ public:
 	// 获取链表长度
 	size_type size() const noexcept { return _length; }
 
+private:
+	// 获取索引对应指针
+	node_type* _get_node_at(size_type index) const {
+		if (index >= _length) throw std::out_of_range("Invalid position");
+		node_type* node = _head;
+		for (size_type i = 0; i < index; ++i) {
+			node = node->_next;
+		}
+		return node;
+	}
+
+public:
 	//清理全链表
 	void clear() {
 		node_type* temp;
@@ -425,33 +436,23 @@ private:
 	ptr=2 next=3 delete 2
 	ptr=3 next=null delete 3
 	*/
-	void _clear_after(node_type* ptr) {
-		node_type* temp = ptr;
-		for (node_type* tempPtr = ptr->_next; ptr != nullptr;) {   
-			ptr = tempPtr;         
-			tempPtr = ptr->_next;
-			delete ptr;
+	void _clear_after(node_type* _ptr) {
+		node_type* temp = _ptr;
+		for (node_type* tempPtr = _ptr->_next; _ptr != nullptr;) {   
+			_ptr = tempPtr;         
+			tempPtr = _ptr->_next;
+			delete _ptr;
 			--_length;
 		}
 		temp->_next = nullptr;
 	}
 
-	// 获取索引对应指针
-	node_type* _get_node_at(size_type index) const {
-		if(index >= _length) throw std::out_of_range("Invalid position");
-		node_type* node = _head;
-		for (size_type i = 0; i < index; ++i) {
-			node = node->_next;
-		}
-		return node;
-	}
-
 public:
-	void swap(LinkedList& lhs, LinkedList& rhs) noexcept {
+	friend void swap(LinkedList& lhs, LinkedList& rhs) noexcept {
 		lhs.swap(rhs);
 	}
 
-	friend void swap(LinkedList& other) noexcept {
+	void swap(LinkedList& other) noexcept {
 		using std::swap;
 		swap(_head, other._head);
 		swap(_length, other._length);
@@ -462,6 +463,11 @@ public:
 	iterator end() noexcept { return iterator(nullptr); }
 	iterator before_end() noexcept {
 		return empty() ? end() : iterator(_get_node_at(_length - 1));
+	}
+	const_iterator begin() const noexcept { return const_iterator(_head); }
+	const_iterator end() const noexcept { return const_iterator(nullptr); }
+	const_iterator before_end() const noexcept {
+		return empty() ? end() : const_iterator(_get_node_at(_length - 1));
 	}
 	const_iterator cbegin() const noexcept { return begin(); }
 	const_iterator cend() const noexcept { return end(); }
@@ -477,33 +483,37 @@ public:
 	using difference_type = std::ptrdiff_t;
 	using pointer = U*;
 	using reference = U&;
-	using node_type = LinkedList<T>::_Node<U>;
+	using node_type = LinkedList<T>::_Node<T>;
 	using iterator = LinkedListIterator<T>;
 	using const_iterator = LinkedListIterator<const T>;
-	friend class LinkedList<T>;
+	template<typename> friend class LinkedList;
+	template<typename> friend class LinkedListIterator;
 private:
 	node_type* _ptr;// 指向链表节点的指针
 public:
-	explicit LinkedListIterator(node_type* ptr) : _ptr(ptr) {}
+	explicit LinkedListIterator(node_type* _ptr) : _ptr(_ptr) {}
 
 	reference operator*() const { return _ptr->_data; }
 	pointer operator->() const { return &_ptr->_data; }
 
-	iterator& operator++() {
+	LinkedListIterator& operator++() {
 		_ptr = _ptr->_next;
 		return *this;
 	}
 
-	iterator operator++(int) {
-		iterator tmp = *this;
+	LinkedListIterator operator++(int) {
+		LinkedListIterator tmp = *this;
 		++(*this);
 		return tmp;
 	}
 
-	bool operator==(const iterator& other) const {
-		return _ptr == other._ptr;
+	template<typename OtherU>
+	bool operator==(const LinkedListIterator<OtherU>& other) const {
+		return _ptr == other._ptr;  // 需要_ptr可访问
 	}
-	bool operator!=(const iterator& other) const {
+
+	template<typename OtherU>
+	bool operator!=(const LinkedListIterator<OtherU>& other) const {
 		return !(*this == other);
 	}
 

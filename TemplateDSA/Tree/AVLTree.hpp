@@ -32,6 +32,10 @@ public:
 protected:
 	BTree* tree = nullptr;
 	Compare compare = Compare();//compare(A,B) A<B=true A=B=false A>B=false
+	/*
+	* 非递归的更新深度
+	* @param node 当前节点
+	*/
 	inline static void updateDepth(BTree*& node) {
 		if (node->lChild == nullptr && node->rChild == nullptr) {
 			node->element.depth = 1;
@@ -71,6 +75,7 @@ protected:
 					B		T3			T1		A
 					| \						  / |
 					T1	T2					T2	T3
+
 					T1 == T2 + 1 == T3 + 1 == h
 					A(T1 + 2, T1 + 1 - T3 == 2)
 					B(T1 + 1, T1 - T2 == 1)
@@ -89,6 +94,7 @@ protected:
 					T1	C			B  T3		T1 T2   T3 T4
 						| \			| \
 						T2 T3		T1 T2
+
 					(T1 == T4 == h)	(T2 == T3 + 1 == h) || (T2 + 1 == T3 == h) || (T2 == T3 == h)
 					A(C + 2, (C + 1) - T4 == 2)
 					B(C + 1, T1 - C == -1)
@@ -110,6 +116,7 @@ protected:
 					T1		B			A		T3
 						  / |			| \
 						T2	T3			T1	T2
+
 					T1 + 1 == T2 + 1 == T3 == h
 					A(T3 + 2, T1 - (T3 + 1) == -2)
 					B(T3 + 1, T2 - T3 == -1)
@@ -128,6 +135,7 @@ protected:
 						C	T4			T2 B		T1 T2   T3 T4
 					  / |				 / |
 					T2 T3				T3 T4
+
 					(T1 == T4 == h)	(T2 == T3 + 1 == h) || (T2 + 1 == T3 == h) || (T2 == T3 == h)
 					A(C + 2, T1 - (C + 1) == -2)
 					B(C + 1, C - T4 == 1)

@@ -10,7 +10,7 @@ private:
 	template<typename U>
 	class _Node {
 	public:
-		using node_type = _Node<U>;//改成using node_type = _Node<T>;
+		using node_type = _Node<U>;
 		friend class TailLinkedList;
 		friend class TailLinkedListIterator<T>;
 		friend class TailLinkedListIterator<const T>;
@@ -19,11 +19,9 @@ private:
 		U _data;
 	public:
 		explicit _Node(const U& value, node_type* ptr = nullptr)
-			: _data(value), _next(ptr) {
-		}
+			: _data(value), _next(ptr) {}
 		explicit _Node(U&& value, node_type* ptr = nullptr)
-			: _data(std::move(value)), _next(ptr) {
-		}
+			: _data(std::move(value)), _next(ptr) {}
 	};
 	// 哨兵节点（用于before_begin）
 	struct SentinelNode:public _Node<T> {
@@ -57,7 +55,7 @@ public:
 	}
 
 	// 构造 n 个value对象
-	explicit TailLinkedList(size_type n, const T& value) {
+	TailLinkedList(size_type n, const T& value) {
 		for (size_type i = 0; i < n; ++i) {
 			push_back(value); // 默认构造元素
 		}
@@ -92,7 +90,7 @@ public:
 	TailLinkedList& operator=(const TailLinkedList& other) {
 		if (this != &other) {
 			TailLinkedList temp(other);
-			swap(*this, temp);
+			swap(temp);
 		}
 		return *this;
 	}
@@ -114,14 +112,14 @@ public:
 	// 支持聚合初始化赋值
 	TailLinkedList& operator=(std::initializer_list<T> init) {
 		TailLinkedList temp(init);
-		swap(*this, temp);
+		swap(temp);
 		return *this;
 	}
 
 	~TailLinkedList() {
 		clear();
 	}
-
+public:
 	// 首元素访问
 	T& front() {
 		if (empty()) throw std::out_of_range("LinkedList is empty");
@@ -201,15 +199,6 @@ public:
 		++_length;
 		return iterator(new_node);
 	}
-	// 构造插入对象
-	template<typename... Args>
-	iterator emplace_after(iterator pos, Args&&... args) {
-		if (pos == end()) throw std::out_of_range("Invalid position");
-		node_type* new_node = new node_type(T(std::forward<Args>(args)...), pos._ptr->_next);
-		pos._ptr->_next = new_node;
-		++_length;
-		return iterator(new_node);
-	}
 	// 在索引位置 插入元素
 	void insert(size_type index, const T& value) {
 		if (index > _length) throw std::out_of_range("Invalid position");
@@ -219,11 +208,21 @@ public:
 		if (index > _length) throw std::out_of_range("Invalid position");
 		insert_after(_get_pre_iterator(index), std::move(value));
 	}
+
+	// 构造插入对象
+	template<typename... Args>
+	iterator emplace_after(iterator pos, Args&&... args) {
+		if (pos == end()) throw std::out_of_range("Invalid position");
+		node_type* new_node = new node_type(T(std::forward<Args>(args)...), pos._ptr->_next);
+		pos._ptr->_next = new_node;
+		++_length;
+		return iterator(new_node);
+	}
 	// 在索引后构造并插入元素
 	template<typename... Args>
 	void emplace(size_type index, Args&&... args) {
 		if (index > _length) throw std::out_of_range("Invalid position");
-		emplace_after(_get_pre_iterator(index), std::forward<Args>(args));
+		emplace_after(_get_pre_iterator(index), std::forward<Args>(args)...);
 	}
 
 	// 在某个元素后删除元素 返回迭代器指向被删除的后一个元素
@@ -351,50 +350,7 @@ public:
 
 	size_type size() const noexcept { return _length; }
 
-	void clear() noexcept {
-		node_type* current = _sentinel._next;  // 从真实头节点开始
-		while (current != nullptr) {
-			node_type* to_delete = current;
-			current = current->_next;
-			delete to_delete;
-		}
-		_sentinel._next = nullptr;  // 重置哨兵节点
-		_tail = nullptr;           // 重置尾指针
-		_length = 0;               // 长度归零
-	}
-
-	// 预分配内存（无实际作用，仅为兼容STL接口）
-	void reserve(size_type new_cap) { /* 链表无需预留空间 */ }
-
-	// 调整大小
-	void resize(size_type count, const value_type& value = value_type()) {
-		if (_length > count) {// 缩减大小 - 使用 _clearPtr 一次性截断
-			if (count == 0) {
-				clear();
-			}
-			else {
-				node_type* prev = _get_node_at(count - 1);
-				_clear_after(prev); // 清除 prev 之后的所有节点
-				prev->_next = nullptr;
-				_tail = prev;   // 更新尾指针
-				_length = count;
-			}
-			return;
-		}
-		if (_length < count) {// 增大大小 - 批量插入
-			size_type to_add = count - _length;
-			TailLinkedList temp(to_add, value); // 创建临时链表
-			if (empty()) {
-				*this = std::move(temp);   // 直接接管临时链表
-			}
-			else {
-				splice_back(std::move(temp));
-			}
-		}
-	}
-
 private:
-
 	// 获取索引对应指针
 	node_type* _get_node_at(size_type index) const {
 		if (index >= _length) throw std::out_of_range("Invalid position");
@@ -420,7 +376,7 @@ private:
 	}
 
 	// 获取索引对应前向的迭代器
-	iterator _get_pre_iterator(size_type index){
+	iterator _get_pre_iterator(size_type index) {
 		if (index > _length) throw std::out_of_range("Invalid position");
 		iterator it = before_begin();
 		for (size_type i = 0; i < index; ++i) { ++it; }
@@ -433,6 +389,48 @@ private:
 		return it;
 	}
 
+public:
+	void clear() noexcept {
+		node_type* current = _sentinel._next;  // 从真实头节点开始
+		while (current != nullptr) {
+			node_type* to_delete = current;
+			current = current->_next;
+			delete to_delete;
+		}
+		_sentinel._next = nullptr;  // 重置哨兵节点
+		_tail = nullptr;           // 重置尾指针
+		_length = 0;               // 长度归零
+	}
+
+	// 预分配内存（无实际作用，仅为兼容STL接口）
+	void reserve(size_type new_cap) { /* 链表无需预留空间 */ }
+
+	// 调整大小
+	void resize(size_type count, const value_type& value = value_type()) {
+		if (_length > count) {// 缩减大小 - 使用 _clearPtr 一次性截断
+			if (count == 0) {
+				clear();
+			}else {
+				node_type* prev = _get_node_at(count - 1);
+				_clear_after(prev); // 清除 prev 之后的所有节点
+				prev->_next = nullptr;
+				_tail = prev;   // 更新尾指针
+				_length = count;
+			}
+			return;
+		}
+		if (_length < count) {// 增大大小 - 批量插入
+			size_type to_add = count - _length;
+			TailLinkedList temp(to_add, value); // 创建临时链表
+			if (empty()) {
+				*this = std::move(temp);   // 直接接管临时链表
+			}else {
+				splice_back(std::move(temp));
+			}
+		}
+	}
+
+private:
 	// 清除ptr后续所有链表
 	/*
 	head=0->1->2->3 ptr=0
@@ -451,8 +449,11 @@ private:
 		_tail->_next = nullptr;
 	}
 public:
+	friend void swap(TailLinkedList& lhs, TailLinkedList& rhs) noexcept {
+		lhs.swap(rhs);
+	}
 
-	friend void swap(TailLinkedList& other) noexcept {
+	void swap(TailLinkedList& other) noexcept {
 		using std::swap;
 		swap(_sentinel, other._sentinel);
 		swap(_tail, other._tail);
@@ -461,12 +462,20 @@ public:
 
 public:
 	// 迭代器相关操作
-	iterator before_begin() noexcept { return iterator(&_sentinel);}
 	iterator begin() noexcept { return iterator(_sentinel._next);}
+	iterator before_begin() noexcept { return iterator(&_sentinel); }
 	iterator end() noexcept { return iterator(nullptr);}
 	iterator before_end() noexcept { return empty() ? end() : iterator(_tail); }
-	const_iterator cbefore_begin() const noexcept { return before_begin(); }
+
+	const_iterator begin() const noexcept { return const_iterator(_sentinel._next); }
+	const_iterator before_begin() const noexcept { return const_iterator(&_sentinel); }
+	const_iterator end() const noexcept { return const_iterator(nullptr); }
+	const_iterator before_end() const noexcept { return empty() ? end() : const_iterator(_tail); }
+
 	const_iterator cbegin() const noexcept { return begin(); }
+	const_iterator cbefore_begin() const noexcept {
+		return const_iterator(reinterpret_cast<node_type*>(const_cast<SentinelNode*>(&_sentinel)));
+	}
 	const_iterator cend() const noexcept { return end(); }
 	const_iterator cbefore_end() const noexcept { return before_end(); }
 };
@@ -479,10 +488,11 @@ public:
 	using difference_type = std::ptrdiff_t;
 	using pointer = U*;
 	using reference = U&;
-	using node_type = TailLinkedList<T>::_Node<U>;
+	using node_type = TailLinkedList<T>::_Node<T>;
 	using iterator = TailLinkedListIterator<T>;
 	using const_iterator = TailLinkedListIterator<const T>;
-	friend class TailLinkedList<T>;
+	template<typename> friend class TailLinkedList;
+	template<typename> friend class TailLinkedListIterator;
 
 private:
 	node_type* _ptr;
@@ -491,33 +501,30 @@ public:
 	explicit TailLinkedListIterator(node_type* ptr = nullptr) : _ptr(ptr) {}
 
 	// 解引用操作符
-	reference operator*() const {
-		return _ptr->_data;
-	}
+	reference operator*() const { return _ptr->_data; }
 
-	pointer operator->() const {
-		return &_ptr->_data;
-	}
+	pointer operator->() const { return &_ptr->_data; }
 
 	// 前置++
-	iterator& operator++() {
+	TailLinkedListIterator& operator++() {
 		_ptr = _ptr->_next;
 		return *this;
 	}
 
 	// 后置++
-	iterator operator++(int) {
-		iterator temp = *this;
+	TailLinkedListIterator operator++(int) {
+		TailLinkedListIterator temp = *this;
 		++(*this);
 		return temp;
 	}
 
-	// 比较操作符
-	bool operator==(const iterator& other) const {
-		return _ptr == other._ptr;
+	template<typename OtherU>
+	bool operator==(const TailLinkedListIterator<OtherU>& other) const {
+		return _ptr == other._ptr;  // 需要_ptr可访问
 	}
 
-	bool operator!=(const iterator& other) const {
+	template<typename OtherU>
+	bool operator!=(const TailLinkedListIterator<OtherU>& other) const {
 		return !(*this == other);
 	}
 private:

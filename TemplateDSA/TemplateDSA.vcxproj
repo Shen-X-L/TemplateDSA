@@ -128,6 +128,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="allocator.hpp" />
+    <ClInclude Include="BloomFilter.h" />
     <ClInclude Include="Heap.hpp" />
     <ClInclude Include="LinkedList\DoubleLinkedList.hpp" />
     <ClInclude Include="LinkedList\LinkedList.hpp" />
@@ -144,10 +145,13 @@
     <ClInclude Include="Tree\BinarySortTree.hpp" />
     <ClInclude Include="Tree\BinaryTree.hpp" />
     <ClInclude Include="Tree\BinaryWithParentTree.hpp" />
+    <ClInclude Include="Tree\NodeBinaryTree.hpp" />
     <ClInclude Include="Tree\TheTreeHead.h" />
     <ClInclude Include="Tree\Tree.hpp" />
+    <ClInclude Include="_Common.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BloomFilter.cpp" />
     <ClCompile Include="Test.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
