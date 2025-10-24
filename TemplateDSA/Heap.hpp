@@ -14,7 +14,9 @@ private:
 	std::function<bool(const T&, const T&)>  _compare;	 // 比较函数对象
 	static constexpr size_type MIN_CAPACITY = 15; //最小容量
 
+//生命周期函数
 public:
+
 	/*
 	* 构造函数
 	* @param initialCapacity 初始容量
@@ -78,19 +80,19 @@ public:
 	}
 
 	/*
-    * 支持聚合初始化赋值
-    * @param init 初始化列表
-    */
+	* 支持聚合初始化赋值
+	* @param init 初始化列表
+	*/
 	Heap& operator=(std::initializer_list<T> init) {
 		Heap temp(init);
 		swap(*this, temp);
 		return *this;
 	}
-    /*
-    * 实现交换对象
-    * @param first 源对象
-    * @param second 目标对象
-    */
+	/*
+	* 实现交换对象
+	* @param first 源对象
+	* @param second 目标对象
+	*/
 	friend void swap(Heap& first, Heap& second) noexcept {
 		using std::swap;
 		swap(first._ptr, second._ptr);
@@ -100,39 +102,17 @@ public:
 	}
 
 	/*
-    * 析构函数
-    */ 
+	* 析构函数
+	*/ 
 	~Heap() { delete[] _ptr; }
 
-	/*
-    * @return 是否为空
-    */ 
-	bool empty() const noexcept { return _length == 0; }
+//主结构操作函数
+public:
 
 	/*
-	* @return 堆大小
-	*/
-	size_type size() const noexcept { return _length; }
-
-    /*
-    * @return 堆数据指针
-    */
-    T* data() { return _ptr; }
-
-    /*
-    * @return 堆内存大小
-    */
-    size_type capacity() const noexcept { return _capacity; }
-
-    /*
-    * @return 堆是否满容量
-    */
-    bool full() const noexcept { return _length == _capacity; }
-
-	/*
-    * 返回首位元素
-    * @return 首位元素
-    */ 
+	* 返回首位元素
+	* @return 首位元素
+	*/ 
 	T& top() {
 		if (empty()) throw std::out_of_range("Heap is empty");
 		return _ptr[0];
@@ -143,9 +123,9 @@ public:
 	}
 
 	/*
-    * 添加元素
-    * @param value 添加的元素
-    */ 
+	* 添加元素
+	* @param value 添加的元素
+	*/ 
 	void push(const T& value) {
 		if (_length >= _capacity) _reserve();
 		_ptr[_length] = value;
@@ -160,10 +140,10 @@ public:
 	}
 
 	/*
-    * 批量插入
-    * @param first 批量插入的起始迭代器
-    * @param last 批量插入的结束迭代器
-    */ 
+	* 批量插入
+	* @param first 批量插入的起始迭代器
+	* @param last 批量插入的结束迭代器
+	*/ 
 	template<typename InputIt>
 	void push_range(InputIt first, InputIt last) {
 		size_type count = std::distance(first, last);
@@ -191,8 +171,8 @@ public:
 	}
 
 	/*
-    * 破坏性, 删除堆顶元素
-    */ 
+	* 破坏性, 删除堆顶元素
+	*/ 
 	void pop() {
 		if (empty()) throw std::out_of_range("Heap is empty");
 		std::swap(_ptr[0], _ptr[_length - 1]);
@@ -227,13 +207,6 @@ public:
 			pop();
 		}
 	}
-	/*
-    * 清空堆
-    */ 
-	void clear() {
-		_length = 0;
-		_ensure_length();
-	}
 
 	/*
 	* 堆检查
@@ -255,9 +228,9 @@ public:
 	}
 
 	/*
-    * 改变比较函数
-    * @param newCompare 新的比较函数
-    */
+	* 改变比较函数
+	* @param newCompare 新的比较函数
+	*/
 	template<typename NewCompare>
 	void change_compare(NewCompare newCompare) {
 		_compare = std::function<bool(const T&, const T&)>(newCompare);
@@ -265,20 +238,10 @@ public:
 	}
 
 	/*
-	* 改变容量
-	* @param new_capacity 新的容量
+	* 查找元素 O(n)
+	* @param value 要查找的元素
+	* @return 找到的元素的指针
 	*/
-	void reserve(size_type new_capacity) {
-		if (new_capacity > _capacity) {
-			_reserve(new_capacity);
-		}
-	}
-
-	/*
-    * 查找元素 O(n)
-    * @param value 要查找的元素
-    * @return 找到的元素的指针
-    */
 	template<typename U>
 	T* find(const U& value) {
 		for (size_type i = 0; i < _length; ++i) {
@@ -290,11 +253,11 @@ public:
 	}
 
 	/*
-    * 基于元素指针的更新
-    * @param pos 要更新的元素指针
-    * @param new_value 新的元素
-    * @return 元素指针是否越界
-    */ 
+	* 基于元素指针的更新
+	* @param pos 要更新的元素指针
+	* @param new_value 新的元素
+	* @return 元素指针是否越界
+	*/ 
 	bool update_at(T* pos, const T& new_value) {
 		if (pos < _ptr || pos >= _ptr + _length) {
 			return false;  // 指针越界检查
@@ -308,19 +271,129 @@ public:
 		_heapify_down(index);
 		return true;
 	}
-    /*
-    * 基于元素指针的更新
-    * @param pos 要更新的元素指针
-    * @param new_value 新的元素
-    * @return 元素指针是否越界
-    */
+
+	/*
+	* 基于元素指针的更新
+	* @param pos 要更新的元素指针
+	* @param new_value 新的元素
+	* @return 元素指针是否越界
+	*/
 	bool update_at(const T* pos, const T& new_value) {
 		return update_at(const_cast<T*>(pos), new_value);
 	}
 
 	/*
-    * 缩减内存到合适大小
-    */
+	* 合并两个堆
+	* @param other 另一个堆 (移动堆)
+	*/
+	void merge(Heap&& other) {
+		push_range(other.begin(), other.end());
+		other.clear();
+	}
+
+private:
+	/*
+	* 上浮调整堆
+	* @param index 待调整的节点索引
+	*/
+	void _heapify_up(size_type index) {
+		while (index > 0) {
+			size_type parent = (index - 1) / 2;
+			if (_compare(_ptr[index], _ptr[parent])) {
+				std::swap(_ptr[index], _ptr[parent]);
+				index = parent;
+			} else {
+				break;
+			}
+		}
+	}
+
+	/*
+	* 下沉调整堆
+	* @param index 待调整的节点索引
+	*/
+	void _heapify_down(size_type index) {
+		while (true) {
+			size_type left = 2 * index + 1;
+			size_type right = 2 * index + 2;
+			size_type smallest = index;
+			if (left < _length && _compare(_ptr[left], _ptr[smallest])) {
+				smallest = left;
+			}
+			if (right < _length && _compare(_ptr[right], _ptr[smallest])) {
+				smallest = right;
+			}
+			if (smallest != index) {
+				std::swap(_ptr[index], _ptr[smallest]);
+				index = smallest;
+			} else {
+				break;
+			}
+		}
+	}
+
+	/*
+	* Floyd 建堆 重新构建堆
+	*/
+	void _rebuild_heap() {
+		if (_length <= 1) return;
+		size_type i = (_length - 1) / 2;
+		while (true) {
+			// 循环从最后一个非叶子节点开始，自底向上进行堆化
+			_heapify_down(i);
+			if (i == 0) break;
+			--i;
+		}
+	}
+
+//内存操作
+public:
+	/*
+	* @return 是否为空
+	*/
+	bool empty() const noexcept { return _length == 0; }
+
+	/*
+	* @return 堆大小
+	*/
+	size_type size() const noexcept { return _length; }
+
+	/*
+	* @return 堆数据指针
+	*/
+	T* data() { return _ptr; }
+
+	/*
+	* @return 堆内存大小
+	*/
+	size_type capacity() const noexcept { return _capacity; }
+
+	/*
+	* @return 堆是否满容量
+	*/
+	bool full() const noexcept { return _length == _capacity; }
+
+	/*
+	* 清空堆
+	*/
+	void clear() {
+		_length = 0;
+		_ensure_length();
+	}
+
+	/*
+	* 改变容量
+	* @param new_capacity 新的容量
+	*/
+	void reserve(size_type new_capacity) {
+		if (new_capacity > _capacity) {
+			_reserve(new_capacity);
+		}
+	}
+
+	/*
+	* 缩减内存到合适大小
+	*/
 	void shrink_to_fit() {
 		if (_length == 0) {
 			clear();
@@ -339,36 +412,45 @@ public:
 		}
 	}
 
+private:
+
 	/*
-    * 合并两个堆
-    * @param other 另一个堆 (移动堆)
-    */
-	void merge(Heap&& other) {
-		push_range(other.begin(), other.end());
-		other.clear();
+	* @brief 扩展内存
+	* @brief 内存为max(2^n-1,15)
+	* @param minCapacity 最小容量
+	*/
+	void _reserve(size_type minCapacity = 0) {
+		size_type newCapacity = (_capacity == 0) ? MIN_CAPACITY : _capacity * 2 + 1;
+		if (minCapacity > newCapacity) {
+			newCapacity = get_alloc_size(minCapacity);
+		}
+		T* newPtr = new T[newCapacity];
+		for (size_type i = 0; i < _length; ++i) {
+			newPtr[i] = std::move(_ptr[i]);
+		}
+		delete[] _ptr;
+		_ptr = newPtr;
+		_capacity = newCapacity;
 	}
 
-	//迭代器相关
-	T* begin() noexcept { return _ptr; }
-	const T* begin() const noexcept { return _ptr; }
-	T* end() noexcept { return _ptr + _length; }
-	const T* end() const noexcept { return _ptr + _length; }
-	// const版本
-	const T* cbegin() const noexcept { return _ptr; }
-	const T* cend() const noexcept { return _ptr + _length; }
-	// 添加反向迭代器支持
-	std::reverse_iterator<T*> rbegin() noexcept {
-		return std::reverse_iterator<T*>(end());
+	/*
+	* 缩减内存, 长度*4+3 > 内存容量 时触发
+	*/
+	void _ensure_length() {
+		if (_capacity  < MIN_CAPACITY || ((_length + 1) * 4) > _capacity + 1) return;
+		size_type newCapacity = std::max(MIN_CAPACITY, (_capacity + 1) / 2 - 1);
+		if (newCapacity < _length) return;
+		T* newPtr = new T[newCapacity];
+		for (size_type i = 0; i < _length; ++i) {
+			newPtr[i] = std::move(_ptr[i]);
+		}
+		delete[] _ptr;
+		_ptr = newPtr;
+		_capacity = newCapacity;
 	}
-	const std::reverse_iterator<const T*> rbegin() const noexcept {
-		return std::reverse_iterator<const T*>(end());
-	}
-	std::reverse_iterator<T*> rend() noexcept {
-		return std::reverse_iterator<T*>(begin());
-	}
-	const std::reverse_iterator<const T*> rend() const noexcept {
-		return std::reverse_iterator<const T*>(begin());
-	}
+
+//工具类/函数
+public:
 
 	/*
 	* @brief 获取 应该分配的内存大小
@@ -397,99 +479,33 @@ public:
 		}
 		return num;
 	}
-private:
-	/*
-    * 上浮调整堆
-    * @param index 待调整的节点索引
-    */
-	void _heapify_up(size_type index) {
-		while (index > 0) {
-			size_type parent = (index - 1) / 2;
-			if (_compare(_ptr[index], _ptr[parent])) {
-				std::swap(_ptr[index], _ptr[parent]);
-				index = parent;
-			}
-			else {
-				break;
-			}
-		}
-	}
 
-	/*
-    * 下沉调整堆
-    * @param index 待调整的节点索引
-    */
-	void _heapify_down(size_type index) {
-		while (true) {
-			size_type left = 2 * index + 1;
-			size_type right = 2 * index + 2;
-			size_type smallest = index;
-			if (left < _length && _compare(_ptr[left], _ptr[smallest])) {
-				smallest = left;
-			}
-			if (right < _length && _compare(_ptr[right], _ptr[smallest])) {
-				smallest = right;
-			}
-			if (smallest != index) {
-				std::swap(_ptr[index], _ptr[smallest]);
-				index = smallest;
-			}
-			else {
-				break;
-			}
-		}
-	}
+//迭代器相关
+public:
 
-	/*
-    * @brief 扩展内存
-    * @brief 内存为max(2^n-1,15)
-    * @param minCapacity 最小容量
-    */ 
-	void _reserve(size_type minCapacity = 0) {
-		size_type newCapacity = (_capacity == 0) ? MIN_CAPACITY : _capacity * 2 + 1;
-		if (minCapacity > newCapacity) {
-			newCapacity = get_alloc_size(minCapacity);
-		}
-		T* newPtr = new T[newCapacity];
-		for (size_type i = 0; i < _length; ++i) {
-			newPtr[i] = std::move(_ptr[i]);
-		}
-		delete[] _ptr;
-		_ptr = newPtr;
-		_capacity = newCapacity;
+	T* begin() noexcept { return _ptr; }
+	const T* begin() const noexcept { return _ptr; }
+	T* end() noexcept { return _ptr + _length; }
+	const T* end() const noexcept { return _ptr + _length; }
+	// const版本
+	const T* cbegin() const noexcept { return _ptr; }
+	const T* cend() const noexcept { return _ptr + _length; }
+	// 添加反向迭代器支持
+	std::reverse_iterator<T*> rbegin() noexcept {
+		return std::reverse_iterator<T*>(end());
 	}
-
-	/*
-    * 缩减内存, 长度*4+3 > 内存容量 时触发
-    */ 
-	void _ensure_length() {
-		if (_capacity  < MIN_CAPACITY || ((_length + 1) * 4) > _capacity + 1) return;
-		size_type newCapacity = std::max(MIN_CAPACITY, (_capacity + 1) / 2 - 1);
-		if (newCapacity < _length) return;
-		T* newPtr = new T[newCapacity];
-		for (size_type i = 0; i < _length; ++i) {
-			newPtr[i] = std::move(_ptr[i]);
-		}
-		delete[] _ptr;
-		_ptr = newPtr;
-		_capacity = newCapacity;
+	const std::reverse_iterator<const T*> rbegin() const noexcept {
+		return std::reverse_iterator<const T*>(end());
 	}
-
-	/*
-    * Floyd 建堆 重新构建堆
-    */  
-	void _rebuild_heap() {
-		if (_length <= 1) return;
-		size_type i = (_length - 1) / 2;
-		while (true) { 
-			// 循环从最后一个非叶子节点开始，自底向上进行堆化
-			_heapify_down(i);
-			if (i == 0) break;
-			--i;
-		}
+	std::reverse_iterator<T*> rend() noexcept {
+		return std::reverse_iterator<T*>(begin());
+	}
+	const std::reverse_iterator<const T*> rend() const noexcept {
+		return std::reverse_iterator<const T*>(begin());
 	}
 };
 
+//测试函数
 void test_heap_operations() {
 	std::cout << "=== 测试基本堆操作 ===" << std::endl;
 
