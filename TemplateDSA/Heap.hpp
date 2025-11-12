@@ -1,5 +1,18 @@
 #include <functional>
-#define TEST_HEAP
+#include <stdexcept>
+
+#define HEAP
+
+#ifdef TEST
+#include <functional>
+#include <stdexcept>
+#include <cassert>
+#include <iostream>
+#include <algorithm>
+#include <random>
+#include <chrono>
+#endif
+
 template<typename T, typename Compare = std::less<T>>
 class Heap {
 public:
@@ -36,6 +49,7 @@ public:
 	* @param first 迭代器起始位置
 	* @param last 迭代器结束位置
 	* @param compare 比较函数对象
+	* @tparam InputIt 迭代器类型
 	*/
 	template<typename InputIt>
 	Heap(InputIt first, InputIt last, const Compare& comp = Compare())
@@ -88,6 +102,7 @@ public:
 		swap(*this, temp);
 		return *this;
 	}
+
 	/*
 	* 实现交换对象
 	* @param first 源对象
@@ -112,6 +127,7 @@ public:
 	/*
 	* 返回首位元素
 	* @return 首位元素
+	* @throw std::out_of_range 堆为空时抛出
 	*/ 
 	T& top() {
 		if (empty()) throw std::out_of_range("Heap is empty");
@@ -143,6 +159,7 @@ public:
 	* 批量插入
 	* @param first 批量插入的起始迭代器
 	* @param last 批量插入的结束迭代器
+	* @tparam InputIt 迭代器类型
 	*/ 
 	template<typename InputIt>
 	void push_range(InputIt first, InputIt last) {
@@ -172,6 +189,7 @@ public:
 
 	/*
 	* 破坏性, 删除堆顶元素
+	* @throw std::out_of_range 堆为空时抛出
 	*/ 
 	void pop() {
 		if (empty()) throw std::out_of_range("Heap is empty");
@@ -186,6 +204,7 @@ public:
 	* @brief 将堆顶元素弹出到输出迭代器中
 	* @param first 起始输出迭代器
 	* @param last 结束输出迭代器
+	* @tparam OutputIt 迭代器类型
 	*/
 	template<typename OutputIt>
 	void pop_range(OutputIt first, OutputIt last) {
@@ -199,6 +218,7 @@ public:
 	* @brief 破坏性, 会清空全部堆数据
 	* @brief 将堆排序到输出迭代器中 
 	* @param dest 起始输出迭代器
+	* @tparam OutputIt 迭代器类型
 	*/
 	template<typename OutputIt>
 	void sort_to(OutputIt dest) {
@@ -230,6 +250,7 @@ public:
 	/*
 	* 改变比较函数
 	* @param newCompare 新的比较函数
+	* @tparam NewCompare 新的比较函数类型
 	*/
 	template<typename NewCompare>
 	void change_compare(NewCompare newCompare) {
@@ -241,6 +262,7 @@ public:
 	* 查找元素 O(n)
 	* @param value 要查找的元素
 	* @return 找到的元素的指针
+	* @tparam U 元素类型
 	*/
 	template<typename U>
 	T* find(const U& value) {
@@ -349,7 +371,7 @@ private:
 //内存操作
 public:
 	/*
-	* @return 是否为空
+	* @return 堆是否为空
 	*/
 	bool empty() const noexcept { return _length == 0; }
 
@@ -505,6 +527,7 @@ public:
 	}
 };
 
+#ifdef TEST
 //测试函数
 void test_heap_operations() {
 	std::cout << "=== 测试基本堆操作 ===" << std::endl;
@@ -693,3 +716,22 @@ void test_iterators() {
 
 	std::cout << "迭代器测试通过" << std::endl;
 }
+
+int test_heap() {
+	try {
+		test_heap_operations();
+		test_initialization();
+		test_capacity_management();
+		test_custom_comparator();
+		test_edge_cases();
+		test_performance();
+		test_iterators();
+
+		std::cout << "\n所有测试通过！堆实现正确。" << std::endl;
+		return 0;
+	} catch (const std::exception& e) {
+		std::cerr << "测试失败: " << e.what() << std::endl;
+		return 1;
+	}
+}
+#endif
